@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Perbandingan Berbalik Nilai - Media Pembelajaran Interaktif</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ================= VARIABEL WARNA & FONT ================= */
+:root{
+  --pink-deep:#f6a6c1;
+  --pink-main:#ffc2d6;
+  --pink-mid:#ffd6e6;
+  --pink-light:#ffeef5;
+  --pink-pale:#fff5f9;
+  --white:#ffffff;
+  --text-dark:#5a3a45;
+  --text-soft:#8a6572;
+  --success:#7fd8a0;
+  --success-bg:#e8fbef;
+  --error:#ff9fae;
+  --error-bg:#fff0f2;
+  --shadow: 0 10px 30px rgba(230,120,160,0.18);
+  --radius: 22px;
+  --font-heading:'Baloo 2', cursive;
+  --font-body:'Poppins', sans-serif;
+}
+
+*{ box-sizing:border-box; margin:0; padding:0; }
+
+html,body{
+  height:100%;
+  overflow:hidden;               /* halaman tidak pernah discroll */
+  overscroll-behavior:none;
+  font-family: var(--font-body);
+  color: var(--text-dark);
+  background: var(--pink-pale);  /* fallback warna dasar; gradasi asli ada di #bgBubbles */
+  -webkit-tap-highlight-color: transparent;
+}
+
+body{
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+  height:100dvh; /* tinggi layar yang sebenarnya di HP, memperhitungkan address bar */
+}
+
+button{ font-family: var(--font-body); cursor:pointer; border:none; outline:none; }
+textarea{ font-family: var(--font-body); }
+ul{ list-style:none; }
+.hidden{ display:none !important; }
+
+/* ================= LAPISAN BACKGROUND BERGERAK ================= */
+/* Lapisan ini fixed di belakang seluruh halaman (z-index negatif) sehingga
+   tetap terlihat & terus bergerak di halaman mana pun (cover, menu, materi, dst)
+   tanpa ikut ter-scroll dan tanpa mengganggu tombol/klik (pointer-events:none). */
+#bgBubbles{
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background: linear-gradient(160deg, var(--pink-pale) 0%, var(--pink-light) 45%, var(--pink-mid) 100%);
+}
+
+.float-el{
+  position: absolute;
+  bottom: -120px;
+  animation-name: floatUp;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  will-change: transform, opacity;
+}
+
+.bubble-shape{
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 32%, rgba(255,255,255,0.95), rgba(255,182,207,0.35) 60%, rgba(255,182,207,0.12) 100%);
+  border: 1px solid rgba(255,255,255,0.6);
+  box-shadow: 0 0 18px rgba(255,182,207,0.35) inset;
+}
+
+.emoji-el{
+  filter: drop-shadow(0 4px 6px rgba(180,90,120,0.15));
+}
+
+@keyframes floatUp{
+  0%{
+    transform: translateY(0) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+  8%{ opacity: 0.55; }
+  50%{
+    transform: translateY(-58vh) translateX(22px) rotate(12deg);
+  }
+  92%{ opacity: 0.5; }
+  100%{
+    transform: translateY(-118vh) translateX(-16px) rotate(-10deg);
+    opacity: 0;
+  }
+}
+
+/* Menghormati pengguna yang memilih pengurangan gerak di perangkatnya */
+@media (prefers-reduced-motion: reduce){
+  .float-el{ animation: none; opacity: 0.25; }
+}
+
+/* ================= TOP BAR ================= */
+.topbar{
+  flex: 0 0 auto;                /* topbar tetap diam, tidak ikut scroll */
+  z-index: 50;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:10px 16px;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--pink-mid);
+}
+.icon-btn{
+  background: var(--white);
+  border: 2px solid var(--pink-main);
+  border-radius: 999px;
+  padding:8px 14px;
+  font-size:15px;
+  font-weight:600;
+  color: var(--text-dark);
+  display:flex;
+  align-items:center;
+  gap:6px;
+  transition: transform .15s ease, background .2s ease;
+}
+.icon-btn:hover{ background: var(--pink-light); transform: translateY(-2px); }
+.icon-btn:active{ transform: scale(0.94); }
+
+.progress-wrap{
+  flex:1;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  max-width: 320px;
+}
+.progress-track{
+  flex:1;
+  height:10px;
+  border-radius:10px;
+  background: var(--pink-light);
+  overflow:hidden;
+  border:1px solid var(--pink-mid);
+}
+.progress-fill{
+  height:100%;
+  width:0%;
+  background: linear-gradient(90deg, var(--pink-deep), var(--pink-main));
+  border-radius:10px;
+  transition: width .4s ease;
+}
+.progress-label{ font-size:12px; color:var(--text-soft); white-space:nowrap; font-weight:600; }
+
+@media (max-width:480px){
+  .topbar-text{ display:none; }
+  .progress-label{ display:none; }
+  .progress-wrap{ max-width: 90px; }
+}
+
+/* ================= SCREENS / TRANSISI ================= */
+/* #app mengisi SISA tinggi layar (tinggi layar - topbar), dan tidak pernah
+   memunculkan scrollbar sendiri. Hanya SATU .screen yang tampil (display:flex)
+   di satu waktu, sisanya display:none - jadi cover dan menu TIDAK PERNAH
+   terlihat bersamaan atau tertumpuk saat discroll. */
+#app{
+  flex: 1 1 auto;
+  min-height: 0;               /* wajib agar flex child bisa membatasi tinggi dgn benar */
+  position: relative;
+  overflow: hidden;
+}
+
+.screen{
+  display:none;
+  flex-direction:column;
+  height: 100%;
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 22px 18px;
+  overflow-y: auto;            /* fallback: hanya KONTEN halaman ini yg boleh scroll internal jika terlalu panjang di layar kecil, bukan seluruh web */
+  scrollbar-width: thin;
+  position: relative;          /* jadi acuan posisi untuk elemen dekorasi bergerak di dalamnya */
+  animation: fadeSlideIn .4s ease;
+}
+.screen.active{ display:flex; }
+
+/* Lapisan dekorasi bergerak LOKAL di dalam setiap halaman (kecuali cover).
+   Ditaruh menempel di dalam .screen (bukan fixed ke seluruh layar) supaya
+   dijamin selalu ikut ter-render bersama halaman ini di perangkat/browser apa pun.
+   Elemen ini otomatis dibuat & disisipkan oleh script.js ke setiap halaman. */
+.screen-bg-float{
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+}
+/* Semua elemen ASLI halaman (bukan lapisan dekorasi) didorong ke atas
+   supaya tombol & teks tetap bisa diklik dan terbaca jelas */
+.screen-bg-float ~ *{
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes fadeSlideIn{
+  from{ opacity:0; transform: translateY(14px); }
+  to{ opacity:1; transform: translateY(0); }
+}
+
+/* ================= COVER (dibuat SANGAT beda dari Menu) ================= */
+#screen-cover{
+  max-width: 100%;
+  align-items:center;
+  justify-content:center;
+  position: relative;
+  padding: 20px;
+  overflow: hidden;
+  background: linear-gradient(150deg, #ff9ec0 0%, #ff85ac 45%, #ffb6cf 100%);
+}
+.cover-sound-btn{
+  position:absolute;
+  top:18px; right:18px;
+  z-index: 10;
+}
+.cover-decor{
+  position:absolute;
+  font-size: 42px;
+  opacity:0.55;
+  animation: floaty 5s ease-in-out infinite;
+  pointer-events:none;
+}
+.deco-1{ top:8%; left:6%; animation-delay:0s;}
+.deco-2{ top:18%; right:10%; animation-delay:.8s; font-size:30px;}
+.deco-3{ bottom:12%; left:10%; animation-delay:1.6s; font-size:34px;}
+.deco-4{ bottom:8%; right:8%; animation-delay:.4s;}
+.deco-5{ top:50%; left:2%; animation-delay:1.2s; font-size:26px;}
+.deco-6{ top:36%; right:22%; animation-delay:2.1s; font-size:24px;}
+.deco-7{ bottom:32%; right:30%; animation-delay:.9s; font-size:28px;}
+
+@keyframes floaty{
+  0%,100%{ transform: translateY(0) rotate(0deg); }
+  50%{ transform: translateY(-16px) rotate(8deg); }
+}
+
+.cover-card{
+  background: var(--white);
+  border-radius: 32px;
+  padding: 48px 34px;
+  text-align:center;
+  max-width: 520px;
+  width:100%;
+  box-shadow: var(--shadow);
+  border: 3px solid var(--pink-mid);
+  position:relative;
+  z-index:2;
+}
+.eyebrow{
+  color: var(--text-soft);
+  font-weight:600;
+  font-size: 14px;
+  margin-bottom: 10px;
+  letter-spacing: .5px;
+}
+.bunny-hero{ font-size: 64px; margin: 6px 0 14px; }
+.bunny{ display:inline-block; animation: hop 1.6s ease-in-out infinite; }
+.carrot{ display:inline-block; margin-left: 8px; animation: wiggle 2s ease-in-out infinite; }
+@keyframes hop{
+  0%,100%{ transform: translateY(0); }
+  30%{ transform: translateY(-14px); }
+  50%{ transform: translateY(0); }
+}
+@keyframes wiggle{
+  0%,100%{ transform: rotate(-6deg); }
+  50%{ transform: rotate(6deg); }
+}
+.cover-title{
+  font-family: var(--font-heading);
+  font-size: clamp(26px, 6vw, 38px);
+  color: var(--pink-deep);
+  line-height:1.25;
+  text-shadow: 2px 2px 0 var(--pink-light);
+}
+.cover-subtitle{
+  margin-top: 10px;
+  color: var(--text-soft);
+  font-weight:500;
+  font-size: 15px;
+}
+
+/* ================= BUTTONS ================= */
+.btn-primary{
+  background: linear-gradient(135deg, var(--pink-deep), var(--pink-main));
+  color: var(--white);
+  font-weight:700;
+  font-size:16px;
+  border-radius: 999px;
+  padding: 14px 28px;
+  box-shadow: 0 8px 18px rgba(240,130,170,0.35);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.btn-primary:hover{ transform: translateY(-3px); box-shadow: 0 12px 22px rgba(240,130,170,0.45); }
+.btn-primary:active{ transform: scale(0.96); }
+.btn-large{ padding:16px 34px; font-size:17px; margin-top: 26px; }
+
+.btn-secondary{
+  background: var(--white);
+  color: var(--pink-deep);
+  font-weight:700;
+  font-size:15px;
+  border-radius:999px;
+  padding: 12px 24px;
+  border: 2px solid var(--pink-main);
+  transition: transform .15s ease, background .15s ease;
+}
+.btn-secondary:hover{ background: var(--pink-light); transform: translateY(-2px); }
+.btn-secondary:active{ transform: scale(0.96); }
+
+/* ================= PAGE HEAD ================= */
+.page-head{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom: 20px;
+}
+.page-head h2{
+  font-family: var(--font-heading);
+  color: var(--pink-deep);
+  font-size: clamp(22px, 5vw, 30px);
+}
+.page-icon{ font-size: 34px; }
+.page-head-menu{ text-align:center; flex-direction:column; gap:4px; margin-bottom:26px; }
+.page-head-menu p{ color: var(--text-soft); font-weight:500; }
+
+/* ================= MENU GRID ================= */
+.menu-grid{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+@media (max-width: 700px){
+  .menu-grid{ grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 420px){
+  .menu-grid{ grid-template-columns: 1fr 1fr; gap:12px; }
+}
+
+.menu-card{
+  background: var(--white);
+  border: 2px solid var(--pink-mid);
+  border-radius: 20px;
+  padding: 24px 12px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  font-weight:700;
+  font-size: 14px;
+  color: var(--text-dark);
+  box-shadow: 0 6px 16px rgba(240,150,180,0.14);
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+  text-align:center;
+}
+.menu-card:hover{
+  transform: translateY(-6px) scale(1.02);
+  background: var(--pink-light);
+  box-shadow: 0 12px 22px rgba(240,150,180,0.28);
+}
+.menu-card:active{ transform: scale(0.96); }
+.menu-icon{ font-size: 34px; }
+
+/* ================= CONTENT CARD ================= */
+.content-card{
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 26px 22px;
+  box-shadow: var(--shadow);
+  border: 2px solid var(--pink-mid);
+}
+.center-text{ text-align:center; }
+.lead{ font-weight:600; margin-bottom: 14px; }
+.mini-illustration{ font-size: 46px; margin: 14px 0; letter-spacing: 10px; }
+
+/* Tujuan pembelajaran */
+.goal-list li{
+  display:flex;
+  gap:14px;
+  align-items:flex-start;
+  background: var(--pink-light);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  font-weight:500;
+  line-height:1.5;
+}
+.goal-num{
+  flex-shrink:0;
+  width:28px; height:28px;
+  background: var(--pink-deep);
+  color:var(--white);
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700;
+  font-size:14px;
+}
+
+/* Pertanyaan & pilihan */
+.question-text{ font-weight:600; font-size: 16px; margin-bottom: 18px; line-height:1.5; }
+.choice-row{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
+.choice-col{ display:flex; flex-direction:column; gap:12px; }
+.choice-btn{
+  background: var(--pink-light);
+  border: 2px solid var(--pink-mid);
+  border-radius: 16px;
+  padding: 14px 20px;
+  font-weight:600;
+  font-size: 15px;
+  color: var(--text-dark);
+  flex:1;
+  min-width: 150px;
+  transition: all .15s ease;
+  text-align:left;
+}
+.choice-btn:hover{ background: var(--pink-mid); transform: translateY(-2px); }
+.choice-btn:active{ transform: scale(0.97); }
+.choice-btn.correct{ background: var(--success-bg); border-color: var(--success); }
+.choice-btn.wrong{ background: var(--error-bg); border-color: var(--error); }
+.choice-btn.disabled{ pointer-events:none; opacity:0.85; }
+
+.feedback-box{
+  margin-top: 16px;
+  min-height: 4px;
+}
+.feedback-box p{
+  background: var(--pink-light);
+  border-left: 5px solid var(--pink-deep);
+  padding: 14px 16px;
+  border-radius: 12px;
+  font-weight:500;
+  line-height:1.5;
+  animation: fadeSlideIn .35s ease;
+}
+.feedback-box p.fb-correct{ background: var(--success-bg); border-color: var(--success); }
+.feedback-box p.fb-wrong{ background: var(--error-bg); border-color: var(--error); }
+
+/* Video */
+.video-wrap{
+  position: relative;
+  margin-top: 18px;
+  border-radius: 18px;
+  overflow:hidden;
+  background: var(--pink-light);
+  border: 2px dashed var(--pink-main);
+  min-height: 220px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.video-player{ width:100%; display:block; border-radius:18px; }
+.video-placeholder-overlay{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap: 10px;
+  text-align:center;
+  padding: 16px;
+  color: var(--text-soft);
+}
+.video-emoji{ font-size: 38px; }
+.video-placeholder-overlay code{
+  background: var(--white);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+/* Ayo menemukan */
+.find-compare{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 18px 0;
+}
+.find-box{
+  background: var(--pink-light);
+  border-radius: 16px;
+  padding: 18px;
+  text-align:center;
+  min-width: 140px;
+  font-weight:600;
+}
+.find-bunnies{ font-size: 22px; margin-bottom: 8px; letter-spacing:2px; }
+.find-arrow{ font-size: 28px; color: var(--pink-deep); }
+
+.reveal-buttons{ display:flex; gap:12px; flex-wrap:wrap; margin-top: 18px; }
+.reveal-box{
+  margin-top: 14px;
+  background: var(--pink-light);
+  border-radius: 14px;
+  padding: 16px;
+  line-height:1.6;
+  font-weight:500;
+  animation: fadeSlideIn .35s ease;
+}
+
+/* LKPD */
+.soal-box{
+  background: var(--pink-light);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 18px;
+}
+.soal-title{ font-weight:700; color: var(--pink-deep); margin-bottom: 8px; font-size: 16px; }
+.jawab-area{
+  width:100%;
+  margin-top: 10px;
+  border-radius: 12px;
+  border: 2px solid var(--pink-mid);
+  padding: 12px;
+  min-height: 80px;
+  resize: vertical;
+  font-size: 14px;
+  background: var(--white);
+}
+.jawab-area:focus{ outline:none; border-color: var(--pink-deep); }
+
+/* Presentasi */
+.present-list{ text-align:left; max-width:420px; margin: 14px auto; }
+.present-list li{ padding: 10px 0; font-weight:500; }
+
+/* Materi */
+.definition-box{
+  background: var(--pink-light);
+  border-left: 5px solid var(--pink-deep);
+  border-radius: 14px;
+  padding: 16px;
+  font-weight:500;
+  line-height:1.6;
+}
+.formula-box{
+  text-align:center;
+  font-family: var(--font-heading);
+  font-size: clamp(22px, 5vw, 30px);
+  color: var(--pink-deep);
+  background: var(--pink-light);
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 16px;
+}
+.step-wrap{ margin: 18px 0; display:flex; flex-direction:column; gap:10px; }
+.step-item{
+  background: var(--pink-light);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-weight:600;
+  font-size: 16px;
+  opacity:0;
+  max-height:0;
+  overflow:hidden;
+  transition: opacity .4s ease, max-height .4s ease, padding .4s ease;
+}
+.step-item.shown{ opacity:1; max-height: 100px; }
+
+/* Kuis */
+.quiz-topline{
+  display:flex;
+  justify-content:space-between;
+  font-weight:700;
+  color: var(--pink-deep);
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+
+/* Refleksi */
+.reflect-row{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin: 18px 0; }
+.reflect-btn{
+  background: var(--pink-light);
+  border: 2px solid var(--pink-mid);
+  border-radius: 18px;
+  padding: 18px;
+  font-weight:600;
+  font-size: 14px;
+  flex:1;
+  min-width: 130px;
+  max-width: 180px;
+  line-height:1.6;
+  transition: all .15s ease;
+}
+.reflect-btn:hover{ background: var(--pink-mid); transform: translateY(-3px); }
+.reflect-btn:active{ transform: scale(0.96); }
+.reflect-btn.selected{ background: var(--success-bg); border-color: var(--success); }
+
+/* ================= NAV ROW ================= */
+.nav-row{
+  display:flex;
+  justify-content:space-between;
+  gap: 12px;
+  margin-top: 26px;
+  flex-wrap: wrap;
+}
+.nav-row-end{ justify-content:center; }
+
+/* ================= RESPONSIVE TOUCH ================= */
+@media (max-width: 480px){
+  .screen{ padding: 20px 14px 50px; }
+  .content-card{ padding: 20px 16px; }
+  .btn-primary, .btn-secondary{ font-size:14px; padding:12px 18px; width:100%; text-align:center; }
+  .nav-row{ flex-direction:column-reverse; }
+  .choice-row{ flex-direction:column; }
+  .choice-btn{ width:100%; }
+}
+
+/* Scrollbar cute (opsional, tidak mempengaruhi fungsi) */
+::-webkit-scrollbar{ width:10px; }
+::-webkit-scrollbar-track{ background: var(--pink-light); }
+::-webkit-scrollbar-thumb{ background: var(--pink-main); border-radius:10px; }
+
+</style>
+</head>
+<body>
+
+<!-- ============ LAPISAN BACKGROUND BERGERAK (tampil di semua halaman) ============ -->
+<div id="bgBubbles" aria-hidden="true">
+  <span class="float-el bubble-shape" style="left:4%; width:70px; height:70px; animation-duration:16s; animation-delay:0s;"></span>
+  <span class="float-el bubble-shape" style="left:82%; width:46px; height:46px; animation-duration:12s; animation-delay:2s;"></span>
+  <span class="float-el bubble-shape" style="left:60%; width:90px; height:90px; animation-duration:20s; animation-delay:4s;"></span>
+  <span class="float-el bubble-shape" style="left:22%; width:34px; height:34px; animation-duration:10s; animation-delay:1s;"></span>
+  <span class="float-el bubble-shape" style="left:70%; width:58px; height:58px; animation-duration:14s; animation-delay:6s;"></span>
+  <span class="float-el bubble-shape" style="left:38%; width:26px; height:26px; animation-duration:9s; animation-delay:3s;"></span>
+
+  <span class="float-el emoji-el" style="left:10%; font-size:30px; animation-duration:17s; animation-delay:.5s;">🐰</span>
+  <span class="float-el emoji-el" style="left:88%; font-size:26px; animation-duration:14s; animation-delay:3.5s;">🥕</span>
+  <span class="float-el emoji-el" style="left:48%; font-size:22px; animation-duration:12s; animation-delay:1.5s;">➗</span>
+  <span class="float-el emoji-el" style="left:30%; font-size:24px; animation-duration:15s; animation-delay:5s;">🥕</span>
+  <span class="float-el emoji-el" style="left:66%; font-size:28px; animation-duration:18s; animation-delay:2.5s;">🐰</span>
+  <span class="float-el emoji-el" style="left:15%; font-size:20px; animation-duration:11s; animation-delay:4.5s;">➕</span>
+  <span class="float-el emoji-el" style="left:92%; font-size:22px; animation-duration:13s; animation-delay:0s;">✖️</span>
+  <span class="float-el emoji-el" style="left:55%; font-size:20px; animation-duration:16s; animation-delay:6.5s;">📐</span>
+  <span class="float-el emoji-el" style="left:5%; font-size:22px; animation-duration:19s; animation-delay:2s;">🔢</span>
+  <span class="float-el emoji-el" style="left:76%; font-size:24px; animation-duration:10s; animation-delay:5.5s;">✨</span>
+  <span class="float-el emoji-el" style="left:40%; font-size:26px; animation-duration:15s; animation-delay:7s;">🥕</span>
+  <span class="float-el emoji-el" style="left:95%; font-size:20px; animation-duration:13.5s; animation-delay:1s;">📊</span>
+</div>
+
+<!-- ============ TOP BAR (muncul di semua halaman kecuali cover) ============ -->
+<div class="topbar" id="topbar" style="display:none;">
+  <button class="icon-btn" id="btnMenuUtama" title="Menu Utama">🏠 <span class="topbar-text">Menu Utama</span></button>
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <span class="progress-label" id="progressLabel">0/9 halaman</span>
+  </div>
+  <button class="icon-btn" id="btnSound" title="Suara ON/OFF">🔊</button>
+</div>
+
+<div id="app">
+
+  <!-- ============ 1. COVER ============ -->
+  <section class="screen active" id="screen-cover">
+    <button class="icon-btn cover-sound-btn" id="btnSoundCover" title="Suara ON/OFF">🔊</button>
+    <div class="cover-decor deco-1">🥕</div>
+    <div class="cover-decor deco-2">✨</div>
+    <div class="cover-decor deco-3">➗</div>
+    <div class="cover-decor deco-4">🐰</div>
+    <div class="cover-decor deco-5">✨</div>
+    <div class="cover-decor deco-6">🔢</div>
+    <div class="cover-decor deco-7">🥕</div>
+    <div class="cover-card">
+      <p class="eyebrow">📐 Matematika · Kelas VII SMP</p>
+      <div class="bunny-hero">
+        <span class="bunny">🐰</span>
+        <span class="carrot">🥕</span>
+      </div>
+      <h1 class="cover-title">PERBANDINGAN<br>BERBALIK NILAI</h1>
+      <p class="cover-subtitle">Media Pembelajaran Interaktif · Matematika Kelas VII</p>
+      <button class="btn-primary btn-large" id="btnMulai">▶ MULAI PEMBELAJARAN</button>
+    </div>
+  </section>
+
+  <!-- ============ 2. MENU UTAMA ============ -->
+  <section class="screen" id="screen-menu">
+    <div class="page-head page-head-menu">
+      <h2>Menu Utama</h2>
+      <p>Pilih materi yang ingin kamu pelajari, ya! 🐰</p>
+    </div>
+    <div class="menu-grid">
+      <button class="menu-card" data-target="screen-tujuan"><span class="menu-icon">🎯</span><span>Tujuan Pembelajaran</span></button>
+      <button class="menu-card" data-target="screen-apersepsi"><span class="menu-icon">💭</span><span>Apersepsi</span></button>
+      <button class="menu-card" data-target="screen-video"><span class="menu-icon">🎬</span><span>Video Pembelajaran</span></button>
+      <button class="menu-card" data-target="screen-menemukan"><span class="menu-icon">🔍</span><span>Ayo Menemukan</span></button>
+      <button class="menu-card" data-target="screen-lkpd"><span class="menu-icon">📝</span><span>LKPD</span></button>
+      <button class="menu-card" data-target="screen-presentasi"><span class="menu-icon">🎤</span><span>Presentasi</span></button>
+      <button class="menu-card" data-target="screen-materi"><span class="menu-icon">📚</span><span>Materi</span></button>
+      <button class="menu-card" data-target="screen-kuis"><span class="menu-icon">🧩</span><span>Kuis</span></button>
+      <button class="menu-card" data-target="screen-refleksi"><span class="menu-icon">💭</span><span>Refleksi</span></button>
+    </div>
+  </section>
+
+  <!-- ============ 3. TUJUAN PEMBELAJARAN ============ -->
+  <section class="screen" id="screen-tujuan">
+    <div class="page-head"><span class="page-icon">🎯</span><h2>Tujuan Pembelajaran</h2></div>
+    <div class="content-card">
+      <p class="lead">Setelah mengikuti pembelajaran ini, kamu diharapkan mampu:</p>
+      <ul class="goal-list">
+        <li><span class="goal-num">1</span>Peserta didik mampu menjelaskan hubungan berbalik nilai melalui contoh yang ada dalam kehidupan sehari-hari.</li>
+        <li><span class="goal-num">2</span>Peserta didik mampu menyelesaikan permasalahan sehari-hari yang berkaitan dengan perbandingan berbalik nilai melalui diskusi bersama teman dan menjelaskan cara mendapatkan jawabannya.</li>
+      </ul>
+      <div class="mini-illustration">🐰🥕⏱️👷</div>
+    </div>
+    <div class="nav-row">
+      <button class="btn-secondary btn-back">⬅ Kembali</button>
+      <button class="btn-primary btn-next" data-target="screen-apersepsi">Berikutnya ➡</button>
+    </div>
+  </section>
+
+  <!-- ============ 4. APERSEPSI ============ -->
+  <section class="screen" id="screen-apersepsi">
+    <div class="page-head"><span class="page-icon">💭</span><h2>Apersepsi</h2></div>
+    <div class="content-card">
+      <p class="question-text">"Jika suatu pekerjaan dikerjakan oleh lebih banyak orang, apakah waktu yang dibutuhkan untuk menyelesaikan pekerjaan menjadi <b>lebih lama</b> atau <b>lebih singkat</b>?"</p>
+      <div class="choice-row">
+        <button class="choice-btn" data-answer="lama">🔘 Lebih lama</button>
+        <button class="choice-btn" data-answer="singkat">🔘 Lebih singkat</button>
+      </div>
+      <div class="feedback-box" id="apersepsiFeedback"></div>
+    </div>
+    <div class="nav-row">
+      <button class="btn-secondary btn-back">⬅ Kembali</button>
+      <button class="btn-primary btn-next" data-target="screen-video">Berikutnya ➡</button>
+    </div>
+  </section>
+
+  <!-- ============ 5. VIDEO PEMBELAJARAN ============ -->
+  <section class="screen" id="screen-video">
+    <div class="page-head"><span class="page-icon">🎬</span><h2>Video Pembelajaran</h2></div>
+    <div class="content-card">
+      <p class="question-text">Sebelum menonton, coba pikirkan: "Semakin banyak kelinci, apakah waktu menghabiskan wortel <b>bertambah</b> atau <b>berkurang</b>?"</p>
+      <div class="choice-row">
+        <button class="choice-btn" data-answer="bertambah">🔘 Bertambah</button>
+        <button class="choice-btn" data-answer="berkurang">🔘 Berkurang</button>
+      </div>
+      <div class="feedback-box" id="videoFeedbackPra"></div>
+
+      <div class="video-wrap">
+        <!-- GANTI src di bawah ini dengan video animasi kelinci & wortel milikmu sendiri -->
+        <video id="mainVideo" class="video-player" controls poster="" playsinline>
+          <source src="assets/vidio.mp4" type="video/mp4">
+        </video>
+        <div class="video-placeholder-overlay" id="videoOverlay">
+          <span class="video-emoji">🐰🥕🎬</span>
+          <p>Letakkan file video di <code>assets/video-pembelajaran.mp4</code></p>
+          <button class="btn-primary" id="btnPlayVideo">▶ Play Video</button>
+        </div>
+      </div>
+
+      <p class="question-text" style="margin-top:22px;">Setelah menonton: apa kesimpulanmu sekarang?</p>
+      <div class="feedback-box" id="videoFeedbackPasca"></div>
+    </div>
+    <div class="nav-row">
+      <button class="btn-secondary btn-back">⬅ Kembali</button>
+      <button class="btn-primary btn-next" data-target="screen-menemukan">Berikutnya ➡</button>
+    </div>
+  </section>
+
+  <!-- ============ 6. AYO MENEMUKAN ============ -->
+  <section class="screen" id="screen-menemukan">
+    <div class="page-head"><span class="page-icon">🔍</span><h2>Ayo Menemukan</h2></div>
+    <div class="content-card">
+      <p class="lead">Perhatikan ilustrasi berikut sebelum kita belajar rumusnya bersama-sama!</p>
+      <div class="find-compare">
+        <div class="find-box">
+          <div class="find-bunnies">🐰🐰🐰</div>
+          <p>3 kelinci → <b>8 jam</b></p>
+        </div>
+        <div class="find-arrow">➡</div>
+        <div class="find-box">
+          <div class="find-bunnies">🐰🐰🐰🐰🐰🐰</div>
+          <p>6 kelinci → <b>? jam</b></p>
+        </div>
+      </div>
+      <p class="question-text">Jika jumlah kelinci bertambah, apakah waktu yang diperlukan bertambah atau berkurang?</p>
+      <div class="choice-row">
+        <button class="choice-btn" data-answer="bertambah">🔘 Bertambah</button>
+        <button class="choice-btn" data-answer="berkurang">🔘 Berkurang</button>
+      </div>
+      <div class="feedback-box" id="menemukanFeedback"></div>
+
+      <div class="reveal-buttons">
+        <button class="btn-secondary" id="btnPetunjuk">💡 Lihat Petunjuk</button>
+        <button class="btn-secondary" id="btnJawabanMenemukan">✅ Lihat Jawaban</button>
+      </div>
+      <div class="reveal-box hidden" id="petunjukBox">
+        <p>Petunjuk: perhatikan jumlah wortel yang tersedia itu tetap. Jika kelincinya lebih banyak, wortel yang sama akan dibagi kepada lebih banyak "pemakan". Coba kalikan jumlah kelinci mula-mula dengan waktunya, lalu bandingkan dengan jumlah kelinci yang baru.</p>
+      </div>
+      <div class="reveal-box hidden" id="jawabanMenemukanBox">
+        <p>3 kelinci × 8 jam = 24 (jumlah "porsi kerja" tetap)<br>
+        6 kelinci × x jam = 24<br>
+        x = 24 ÷ 6 = <b>4 jam</b></p>
+        <p>Jadi, semakin banyak kelinci, semakin <b>singkat</b> waktu yang dibutuhkan. Ini adalah konsep <b>perbandingan berbalik nilai</b>!</p>
+      </div>
+    </div>
+    <div class="nav-row">
+      <button class="btn-secondary btn-back">⬅ Kembali</button>
+      <button class="btn-primary btn-next" data-target="screen-lkpd">Berikutnya ➡</button>
+    </div>
+  </section>
+
+  <!-- ============ 7. LKPD ============ -->
+  <section class="screen" id="screen-lkpd">
+    <div class="page-head"><span class="page-icon">📝</span><h2>LKPD</h2></div>
+    <div class="content-card">
+      <p class="lead">Lembar Kerja Peserta Didik — kerjakan bersama kelompokmu!</p>
+
+      <div class="soal-box">
+        <p class="soal-title">Soal 1</p>
+        <p>Dalam video, 3 ekor kelinci menghabiskan wortel selama 8 jam. Jika jumlah kelinci menjadi 6 ekor:</p>
+        <p>a. Apakah waktunya bertambah atau berkurang? Jelaskan.</p>
+        <p>b. Berapa jam yang diperlukan? Tunjukkan penyelesaian.</p>
+        <textarea class="jawab-area" placeholder="Tulis jawabanmu di sini..."></textarea>
+      </div>
+
+      <div class="soal-box">
+        <p class="soal-title">Soal 2</p>
+        <p>4 ekor kelinci membutuhkan waktu 6 jam. Rina berkata: "Jika kelincinya menjadi 8 ekor, waktunya juga menjadi 8 jam."</p>
+        <p>Apakah pendapat Rina benar? Jelaskan dan tentukan jawaban yang benar.</p>
+        <textarea class="jawab-area" placeholder="Tulis jawabanmu di sini..."></textarea>
+      </div>
+
+      <button class="btn-secondary" id="btnPembahasanLKPD">📖 Lihat Pembahasan</button>
+      <div class="reveal-box hidden" id="pembahasanLKPDBox">
+        <p><b>Pembahasan Soal 1:</b><br>
+        a. Waktu berkurang, karena semakin banyak kelinci maka pekerjaan menghabiskan wortel semakin cepat selesai.<br>
+        b. 3 × 8 = 6 × x → 24 = 6x → x = 4 jam</p>
+        <p><b>Pembahasan Soal 2:</b><br>
+        Pendapat Rina <b>tidak benar</b>. Ini adalah perbandingan berbalik nilai, bukan senilai.<br>
+        4 × 6 = 8 × x → 24 = 8x → x = 3 jam. Jadi waktunya menjadi 3 jam, bukan 8 jam.</p>
+      </div>
+    </div>
+    <div class="nav-row">
+      <button class="btn-secondary btn-back">⬅ Kembali</button>
+      <button class="btn-primary btn-next" data-target="screen-presentasi">Berikutnya ➡</button>
+    </div>
+  </section>
+
+  <!-- ============ 8. PRESENTASI ============ -->
+  <section class="screen" id="screen-presentasi">
+    <div class="page-head"><span class="page-icon">🎤</span><h2>Ayo Presentasikan Hasilnya!</h2></div>
+    <div class="content-card center-text">
+      <div class="mini-illustration">🎤🐰📣</div>
+      <ul class="present-list">
+        <li>👩‍🏫 Perwakilan kelompok menjelaskan hasil LKPD.</li>
+        <li>🙋 Kelompok lain menyimak dan memberikan tanggapan.</li>
+      </ul>
+      <p class="lead">Percaya diri, ya! Semua jawaban adalah proses belajar yang berharga. 🌸</p>
+    </div>
+    <div class="nav-row">
+      <button class="btn-secondary btn-back">⬅ Kembali</button>
+      <button class="btn-primary btn-next" data-target="screen-materi">Berikutnya ➡</button>
+    </div>
+  </section>
+
+  <!-- ============ 9. MATERI ============ -->
+  <section class="screen" id="screen-materi">
+    <div class="page-head"><span class="page-icon">📚</span><h2>Materi: Penguatan Konsep</h2></div>
+    <div class="content-card">
+      <div class="definition-box">
+        <p><b>Perbandingan berbalik nilai</b> terjadi ketika salah satu besaran bertambah, sedangkan besaran yang lain berkurang, dengan hasil kali kedua besaran tetap.</p>
+      </div>
+      <div class="formula-box">a₁ × b₁ = a₂ × b₂</div>
+
+      <p class="lead" style="margin-top:24px;">Contoh Soal 👷</p>
+      <p>4 pekerja menyelesaikan pekerjaan dalam 12 hari. Jika pekerja menjadi 8 orang, berapa hari yang dibutuhkan?</p>
+
+      <div class="step-wrap" id="stepWrap">
+        <div class="step-item" data-step="1">4 × 12 = 8 × x</div>
+        <div class="step-item" data-step="2">48 = 8x</div>
+        <div class="step-item" data-step="3">x = 48 ÷ 8</div>
+        <div class="step-item" data-step="4"><b>x = 6 hari</b></div>
+      </div>
+      <button class="btn-primary" id="btnStepMateri">Tampilkan Langkah Berikutnya ➡</button>
+    </div>
+    <div class="nav-row">
+      <button class="btn-secondary btn-back">⬅ Kembali</button>
+      <button class="btn-primary btn-next" data-target="screen-kuis">Berikutnya ➡</button>
+    </div>
+  </section>
+
+  <!-- ============ 10. KUIS ============ -->
+  <section class="screen" id="screen-kuis">
+    <div class="page-head"><span class="page-icon">🧩</span><h2>Kuis Interaktif</h2></div>
+    <div class="content-card" id="kuisContainer">
+      <div id="kuisIntro">
+        <p class="lead">Ada 3 soal pilihan ganda yang cukup menantang tentang perbandingan berbalik nilai. Yuk uji pemahamanmu! 🐰</p>
+        <button class="btn-primary btn-large" id="btnMulaiKuis">▶ Mulai Kuis</button>
+      </div>
+      <div id="kuisPlay" class="hidden">
+        <div class="quiz-topline">
+          <span id="quizNumber">Soal 1/5</span>
+          <span id="quizScore">Skor: 0</span>
+        </div>
+        <p class="question-text" id="quizQuestion"></p>
+        <div class="choice-col" id="quizOptions"></div>
+        <div class="feedback-box" id="quizFeedback"></div>
+        <button class="btn-primary hidden" id="btnQuizNext">Soal Berikutnya ➡</button>
+      </div>
+      <div id="kuisResult" class="hidden center-text">
+        <div class="mini-illustration">🏆🐰🥕</div>
+        <h3 id="quizFinalScore"></h3>
+        <p id="quizFinalMessage"></p>
+        <button class="btn-secondary" id="btnUlangiKuis">🔁 Ulangi Kuis</button>
+      </div>
+    </div>
+    <div class="nav-row">
+      <button class="btn-secondary btn-back">⬅ Kembali</button>
+      <button class="btn-primary btn-next" data-target="screen-refleksi">Berikutnya ➡</button>
+    </div>
+  </section>
+
+  <!-- ============ 11. REFLEKSI ============ -->
+  <section class="screen" id="screen-refleksi">
+    <div class="page-head"><span class="page-icon">💭</span><h2>Refleksi</h2></div>
+    <div class="content-card">
+      <div class="reflect-question-block">
+        <p class="question-text"><b>1.</b> Apa yang kamu dapatkan dari pembelajaran perbandingan berbalik nilai hari ini?</p>
+        <textarea class="jawab-area" id="refleksiJawaban1" placeholder="Tulis dengan jujur ya, jawabanmu tidak dinilai benar/salah..."></textarea>
+      </div>
+
+      <div class="reflect-question-block" style="margin-top:26px;">
+        <p class="question-text"><b>2.</b> Setelah pembelajaran hari ini, apakah kamu sudah bisa membedakan perbandingan senilai dan perbandingan berbalik nilai?</p>
+        <div class="reflect-row">
+          <button class="reflect-btn" data-r="paham">😊<br>Sudah bisa membedakan</button>
+          <button class="reflect-btn" data-r="cukup">🙂<br>Lumayan, kadang masih bingung</button>
+          <button class="reflect-btn" data-r="belajar">🤔<br>Masih bingung, perlu belajar lagi</button>
+        </div>
+        <div class="feedback-box" id="refleksiFeedback"></div>
+      </div>
+    </div>
+    <div class="nav-row nav-row-end">
+      <button class="btn-secondary btn-back">⬅ Kembali</button>
+      <button class="btn-primary btn-next" data-target="screen-menu">🏠 Menu Utama</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+// =====================================================================
+// PERBANDINGAN BERBALIK NILAI - MEDIA PEMBELAJARAN INTERAKTIF
+// =====================================================================
+
+// ---------------------------------------------------------------
+// 0. LAPISAN DEKORASI BERGERAK (semua halaman kecuali cover)
+// ---------------------------------------------------------------
+// Supaya latar belakang tiap halaman (Tujuan, Apersepsi, Materi, dst) tidak
+// terasa kosong/monoton, setiap halaman otomatis diberi elemen bergerak:
+// gelembung lembut, kelinci, wortel, dan simbol matematika.
+// Elemen ini murni dekorasi (pointer-events:none) sehingga TIDAK mengganggu
+// tombol atau interaksi apa pun di atasnya.
+(function initScreenBackgrounds(){
+  const floatEmojis = ['🐰','🥕','➗','➕','✖️','📐','🔢','✨','📏','🌸'];
+
+  function createFloatLayer(count){
+    const wrap = document.createElement('div');
+    wrap.className = 'screen-bg-float';
+    wrap.setAttribute('aria-hidden', 'true');
+
+    for(let i = 0; i < count; i++){
+      const isBubble = i % 3 === 0; // sekitar sepertiga berupa gelembung bulat
+      const el = document.createElement('span');
+      el.className = 'float-el ' + (isBubble ? 'bubble-shape' : 'emoji-el');
+
+      const left = Math.floor(Math.random() * 88) + 2;      // 2% - 90%
+      const duration = (Math.random() * 8 + 9).toFixed(1);   // 9s - 17s
+      const delay = (Math.random() * 7).toFixed(1);          // 0s - 7s
+      el.style.left = left + '%';
+      el.style.animationDuration = duration + 's';
+      el.style.animationDelay = delay + 's';
+
+      if(isBubble){
+        const size = Math.floor(Math.random() * 46) + 26; // 26px - 72px
+        el.style.width = size + 'px';
+        el.style.height = size + 'px';
+      } else {
+        const fontSize = Math.floor(Math.random() * 12) + 18; // 18px - 30px
+        el.style.fontSize = fontSize + 'px';
+        el.textContent = floatEmojis[Math.floor(Math.random() * floatEmojis.length)];
+      }
+      wrap.appendChild(el);
+    }
+    return wrap;
+  }
+
+  document.querySelectorAll('.screen').forEach(screen => {
+    if(screen.id === 'screen-cover') return; // cover sudah punya dekorasi sendiri
+    const layer = createFloatLayer(12);
+    screen.insertBefore(layer, screen.firstChild);
+  });
+})();
+
+// ---------------------------------------------------------------
+// 1. SISTEM AUDIO
+// ---------------------------------------------------------------
+// Suara dibuat langsung oleh kode (Web Audio API / synth tone pendek),
+// jadi TIDAK butuh file MP3 apa pun dan langsung berbunyi di semua perangkat.
+//
+// Jika suatu saat kamu ingin memakai file MP3 buatanmu sendiri, tinggal:
+// 1) letakkan file di folder yang sama, misalnya audio/click.mp3, audio/correct.mp3, audio/wrong.mp3
+// 2) ganti isi fungsi playClick(), playCorrect(), playWrong() di bawah ini
+//    dengan kode seperti: new Audio('audio/click.mp3').play();
+
+let soundOn = true; // status suara selama sesi berjalan
+let audioCtx = null;
+
+function getAudioCtx(){
+  if(!audioCtx){
+    try{
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }catch(e){ audioCtx = null; }
+  }
+  if(audioCtx && audioCtx.state === 'suspended'){
+    audioCtx.resume().catch(()=>{});
+  }
+  return audioCtx;
+}
+
+// Membunyikan satu nada pendek. freq = nada (Hz), duration = lama (detik).
+function beep(freq, duration, type, delay, volume){
+  if(!soundOn) return;
+  const ctx = getAudioCtx();
+  if(!ctx) return;
+  try{
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.value = freq;
+    const now = ctx.currentTime + (delay || 0);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(volume || 0.15, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + duration + 0.03);
+  }catch(e){ /* diabaikan dengan sengaja jika audio tidak didukung */ }
+}
+
+function playClick(){
+  beep(720, 0.07, 'sine', 0, 0.10);
+}
+function playCorrect(){
+  // nada naik pendek yang ceria, seperti "ting!"
+  beep(880, 0.12, 'sine', 0, 0.14);
+  beep(1175, 0.18, 'sine', 0.09, 0.14);
+}
+function playWrong(){
+  // nada turun pendek & lembut, tidak keras/mengagetkan
+  beep(320, 0.16, 'sine', 0, 0.12);
+  beep(210, 0.22, 'sine', 0.12, 0.12);
+}
+
+function updateSoundIcon(){
+  const icon = soundOn ? '🔊' : '🔇';
+  document.getElementById('btnSound').textContent = icon;
+  const coverBtn = document.getElementById('btnSoundCover');
+  if(coverBtn) coverBtn.textContent = icon;
+}
+
+function toggleSound(){
+  soundOn = !soundOn;
+  updateSoundIcon();
+  if(soundOn) playClick();
+}
+
+document.getElementById('btnSound').addEventListener('click', toggleSound);
+document.getElementById('btnSoundCover').addEventListener('click', toggleSound);
+
+// Setiap klik tombol umum otomatis memainkan suara klik pendek,
+// kecuali tombol suara itu sendiri (supaya tidak bunyi dobel saat toggle).
+document.addEventListener('click', function(e){
+  const target = e.target.closest('button');
+  if(!target) return;
+  if(target.id === 'btnSound' || target.id === 'btnSoundCover') return;
+  playClick();
+});
+
+// ---------------------------------------------------------------
+// 2. NAVIGASI ANTAR HALAMAN
+// ---------------------------------------------------------------
+const TOTAL_MATERI_PAGES = 9; // jumlah menu materi (tidak termasuk cover & menu utama)
+const visitedPages = new Set();
+
+const screenOrder = [
+  'screen-tujuan','screen-apersepsi','screen-video','screen-menemukan',
+  'screen-lkpd','screen-presentasi','screen-materi','screen-kuis','screen-refleksi'
+];
+
+function updateProgress(){
+  const count = visitedPages.size;
+  const pct = Math.round((count / TOTAL_MATERI_PAGES) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = count + '/' + TOTAL_MATERI_PAGES + ' halaman';
+}
+
+function showScreen(id){
+  const current = document.querySelector('.screen.active');
+  const next = document.getElementById(id);
+  if(!next || current === next) return;
+
+  current.classList.remove('active');
+  next.classList.add('active');
+  window.scrollTo({top:0, behavior:'smooth'});
+
+  const topbar = document.getElementById('topbar');
+  topbar.style.display = (id === 'screen-cover') ? 'none' : 'flex';
+
+  if(screenOrder.includes(id)){
+    visitedPages.add(id);
+    updateProgress();
+  }
+}
+
+// Tombol MULAI PEMBELAJARAN di cover
+document.getElementById('btnMulai').addEventListener('click', () => showScreen('screen-menu'));
+
+// Tombol Menu Utama di topbar
+document.getElementById('btnMenuUtama').addEventListener('click', () => showScreen('screen-menu'));
+
+// Kartu-kartu menu utama
+document.querySelectorAll('.menu-card').forEach(card => {
+  card.addEventListener('click', () => showScreen(card.dataset.target));
+});
+
+// Semua tombol "Kembali" -> ke menu utama (sesuai instruksi: setiap halaman punya tombol Kembali ke Menu Utama)
+document.querySelectorAll('.btn-back').forEach(btn => {
+  btn.addEventListener('click', () => showScreen('screen-menu'));
+});
+
+// Semua tombol "Berikutnya"
+document.querySelectorAll('.btn-next').forEach(btn => {
+  btn.addEventListener('click', () => showScreen(btn.dataset.target));
+});
+
+// ---------------------------------------------------------------
+// 3. APERSEPSI - jawaban interaktif
+// ---------------------------------------------------------------
+(function(){
+  const box = document.getElementById('apersepsiFeedback');
+  const buttons = document.querySelectorAll('#screen-apersepsi .choice-btn');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('disabled'));
+      const answer = btn.dataset.answer;
+      let html = '';
+      if(answer === 'singkat'){
+        html = '<p class="fb-correct">Menarik! Coba pikirkan lagi: mengapa bisa begitu? Simpan dulu jawabanmu, nanti kita buktikan bersama lewat video dan aktivitas berikutnya. 🐰</p>';
+      } else {
+        html = '<p>Hmm, coba pikirkan lagi ya. Bayangkan jika 2 orang mengecat pagar dibandingkan 10 orang — mana yang lebih cepat selesai? Yuk kita cari tahu jawabannya di halaman berikutnya! 🎬</p>';
+      }
+      box.innerHTML = html;
+    });
+  });
+})();
+
+// ---------------------------------------------------------------
+// 4. VIDEO PEMBELAJARAN
+// ---------------------------------------------------------------
+(function(){
+  const preButtons = document.querySelectorAll('#screen-video .choice-row')[0].querySelectorAll('.choice-btn');
+  const preBox = document.getElementById('videoFeedbackPra');
+  preButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if(btn.dataset.answer === 'berkurang'){
+        preBox.innerHTML = '<p class="fb-correct">Prediksi bagus! Yuk buktikan lewat video di bawah ini. 🎬</p>';
+      } else {
+        preBox.innerHTML = '<p>Coba amati baik-baik saat menonton video, apakah dugaanmu tepat?</p>';
+      }
+    });
+  });
+
+  const pascaBox = document.getElementById('videoFeedbackPasca');
+  const video = document.getElementById('mainVideo');
+  video.addEventListener('ended', () => {
+    pascaBox.innerHTML = '<p class="fb-correct">Betul! Semakin banyak kelinci, semakin sedikit waktu yang dibutuhkan untuk menghabiskan wortel. Ini disebut perbandingan berbalik nilai. Lanjut ke aktivitas "Ayo Menemukan" untuk membuktikannya dengan angka!</p>';
+  });
+
+  // Overlay Play Video (placeholder friendly - jika video belum ada, tombol tetap berfungsi tanpa error)
+  const overlay = document.getElementById('videoOverlay');
+  const playBtn = document.getElementById('btnPlayVideo');
+  playBtn.addEventListener('click', () => {
+    overlay.classList.add('hidden');
+    const playPromise = video.play();
+    if(playPromise !== undefined){
+      playPromise.catch(() => {
+        // Video placeholder belum diganti pengguna - tampilkan kembali overlay dengan pesan
+        overlay.classList.remove('hidden');
+        overlay.querySelector('p').textContent = 'Video belum tersedia. Letakkan file video di assets/video-pembelajaran.mp4';
+      });
+    }
+  });
+})();
+
+// ---------------------------------------------------------------
+// 5. AYO MENEMUKAN
+// ---------------------------------------------------------------
+(function(){
+  const buttons = document.querySelectorAll('#screen-menemukan .choice-row .choice-btn');
+  const box = document.getElementById('menemukanFeedback');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if(btn.dataset.answer === 'berkurang'){
+        box.innerHTML = '<p class="fb-correct">Betul! Ayo buktikan dengan hitungan menggunakan tombol di bawah ini.</p>';
+      } else {
+        box.innerHTML = '<p>Coba pikirkan lagi, lalu cek petunjuk di bawah untuk membantumu. 💡</p>';
+      }
+    });
+  });
+
+  document.getElementById('btnPetunjuk').addEventListener('click', () => {
+    document.getElementById('petunjukBox').classList.toggle('hidden');
+  });
+  document.getElementById('btnJawabanMenemukan').addEventListener('click', () => {
+    document.getElementById('jawabanMenemukanBox').classList.toggle('hidden');
+  });
+})();
+
+// ---------------------------------------------------------------
+// 6. LKPD
+// ---------------------------------------------------------------
+document.getElementById('btnPembahasanLKPD').addEventListener('click', () => {
+  document.getElementById('pembahasanLKPDBox').classList.toggle('hidden');
+});
+
+// ---------------------------------------------------------------
+// 7. MATERI - langkah penyelesaian bertahap
+// ---------------------------------------------------------------
+(function(){
+  const steps = document.querySelectorAll('#stepWrap .step-item');
+  const btn = document.getElementById('btnStepMateri');
+  let currentStep = 0;
+
+  btn.addEventListener('click', () => {
+    if(currentStep < steps.length){
+      steps[currentStep].classList.add('shown');
+      currentStep++;
+    }
+    if(currentStep >= steps.length){
+      btn.textContent = '✅ Selesai';
+      btn.disabled = true;
+      btn.classList.add('disabled');
+    }
+  });
+})();
+
+// ---------------------------------------------------------------
+// 8. KUIS INTERAKTIF
+// ---------------------------------------------------------------
+const quizData = [
+  {
+    question: "Sebuah proyek dapat diselesaikan oleh 15 pekerja dalam 24 hari. Setelah bekerja selama 6 hari, 5 pekerja mengundurkan diri. Berapa hari tambahan yang dibutuhkan untuk menyelesaikan sisa pekerjaan dengan pekerja yang tersisa?",
+    options: ["18 hari", "24 hari", "27 hari", "30 hari"],
+    correct: 2,
+    explain: "Total pekerjaan = 15 × 24 = 360 (satuan pekerja-hari). Pekerjaan yang sudah selesai dalam 6 hari = 15 × 6 = 90. Sisa pekerjaan = 360 − 90 = 270. Dengan 10 pekerja tersisa, waktu tambahan = 270 ÷ 10 = 27 hari."
+  },
+  {
+    question: "Untuk menempuh jarak yang sama, sebuah mobil melaju dengan kecepatan 60 km/jam dan tiba dalam waktu 3 jam. Agar mobil tiba 45 menit lebih cepat, berapa kecepatan yang harus digunakan?",
+    options: ["70 km/jam", "75 km/jam", "80 km/jam", "85 km/jam"],
+    correct: 2,
+    explain: "Waktu baru = 3 jam − 45 menit = 2,25 jam. Karena jarak tetap, berlaku v₁ × t₁ = v₂ × t₂ → 60 × 3 = v₂ × 2,25 → v₂ = 180 ÷ 2,25 = 80 km/jam."
+  },
+  {
+    question: "Manakah pasangan besaran berikut yang merupakan contoh perbandingan BERBALIK NILAI?",
+    options: [
+      "Banyak buku dan total harga buku",
+      "Kecepatan kendaraan dan waktu tempuh untuk jarak yang tetap",
+      "Banyak pekerja harian dan total upah yang dibayarkan",
+      "Panjang kain dan harga total kain"
+    ],
+    correct: 1,
+    explain: "Untuk jarak yang tetap, semakin besar kecepatan maka semakin singkat waktu tempuhnya (dan sebaliknya) — hasil kali keduanya tetap. Pilihan lainnya adalah contoh perbandingan senilai, karena kedua besaran sama-sama bertambah atau berkurang."
+  }
+];
+
+let quizIndex = 0;
+let quizScore = 0;
+let quizAnswered = false;
+
+const kuisIntro = document.getElementById('kuisIntro');
+const kuisPlay = document.getElementById('kuisPlay');
+const kuisResult = document.getElementById('kuisResult');
+
+document.getElementById('btnMulaiKuis').addEventListener('click', startQuiz);
+document.getElementById('btnUlangiKuis').addEventListener('click', startQuiz);
+document.getElementById('btnQuizNext').addEventListener('click', nextQuizQuestion);
+
+function startQuiz(){
+  quizIndex = 0;
+  quizScore = 0;
+  kuisIntro.classList.add('hidden');
+  kuisResult.classList.add('hidden');
+  kuisPlay.classList.remove('hidden');
+  renderQuizQuestion();
+}
+
+function renderQuizQuestion(){
+  quizAnswered = false;
+  const data = quizData[quizIndex];
+  document.getElementById('quizNumber').textContent = `Soal ${quizIndex+1}/${quizData.length}`;
+  document.getElementById('quizScore').textContent = `Skor: ${quizScore}`;
+  document.getElementById('quizQuestion').textContent = data.question;
+  document.getElementById('quizFeedback').innerHTML = '';
+  document.getElementById('btnQuizNext').classList.add('hidden');
+
+  const optWrap = document.getElementById('quizOptions');
+  optWrap.innerHTML = '';
+  data.options.forEach((opt, i) => {
+    const b = document.createElement('button');
+    b.className = 'choice-btn';
+    b.textContent = opt;
+    b.addEventListener('click', () => handleQuizAnswer(i, b));
+    optWrap.appendChild(b);
+  });
+}
+
+function handleQuizAnswer(selectedIndex, btnEl){
+  if(quizAnswered) return;
+  quizAnswered = true;
+  const data = quizData[quizIndex];
+  const allButtons = document.querySelectorAll('#quizOptions .choice-btn');
+  allButtons.forEach(b => b.classList.add('disabled'));
+
+  const feedbackBox = document.getElementById('quizFeedback');
+  if(selectedIndex === data.correct){
+    quizScore++;
+    btnEl.classList.add('correct');
+    playCorrect();
+    feedbackBox.innerHTML = `<p class="fb-correct">✅ Benar! Hebat! ${data.explain}</p>`;
+  } else {
+    btnEl.classList.add('wrong');
+    allButtons[data.correct].classList.add('correct');
+    playWrong();
+    feedbackBox.innerHTML = `<p class="fb-wrong">❌ Belum tepat, coba perhatikan kembali! ${data.explain}</p>`;
+  }
+  document.getElementById('quizScore').textContent = `Skor: ${quizScore}`;
+  document.getElementById('btnQuizNext').classList.remove('hidden');
+}
+
+function nextQuizQuestion(){
+  quizIndex++;
+  if(quizIndex >= quizData.length){
+    showQuizResult();
+  } else {
+    renderQuizQuestion();
+  }
+}
+
+function showQuizResult(){
+  kuisPlay.classList.add('hidden');
+  kuisResult.classList.remove('hidden');
+  document.getElementById('quizFinalScore').textContent = `Skor akhir: ${quizScore} dari ${quizData.length}`;
+
+  let msg = '';
+  if(quizScore === quizData.length){
+    msg = 'Luar biasa! Kamu sudah sangat memahami perbandingan berbalik nilai! 🎉';
+  } else if(quizScore >= quizData.length / 2){
+    msg = 'Bagus! Pemahamanmu sudah cukup baik, terus berlatih ya! 🌸';
+  } else {
+    msg = 'Tidak apa-apa, yuk pelajari lagi bagian Materi supaya lebih paham! 🐰';
+  }
+  document.getElementById('quizFinalMessage').textContent = msg;
+}
+
+// ---------------------------------------------------------------
+// 9. REFLEKSI
+// ---------------------------------------------------------------
+(function(){
+  const buttons = document.querySelectorAll('.reflect-btn');
+  const box = document.getElementById('refleksiFeedback');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      let msg = '';
+      if(btn.dataset.r === 'paham'){
+        msg = '🌟 Keren! Kamu sudah bisa membedakan perbandingan senilai dan berbalik nilai. Pertahankan terus, ya!';
+      } else if(btn.dataset.r === 'cukup'){
+        msg = '👍 Bagus, sudah lumayan paham! Coba latihan beberapa soal lagi supaya makin yakin membedakannya.';
+      } else {
+        msg = '🤗 Tidak apa-apa, itu wajar kok. Kamu bisa buka lagi halaman Materi kapan saja untuk mengingat cirinya. Semangat!';
+      }
+      box.innerHTML = `<p class="fb-correct">${msg}</p>`;
+    });
+  });
+})();
+
+// ---------------------------------------------------------------
+// INIT
+// ---------------------------------------------------------------
+updateProgress();
+updateSoundIcon();
+
+</script>
+</body>
+</html>
